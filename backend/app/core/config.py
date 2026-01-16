@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     jwt_expires_minutes: int = 60 * 24
     cors_origins: str = "*"
     admin_username: str = "admin"
-    admin_password: str = "admin"
+    admin_password: str = "admin1234"
+    admin_role: str = "ADMIN"
 
     class Config:
         env_file = ".env"

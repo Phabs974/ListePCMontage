@@ -5,7 +5,6 @@ Application web auto-hébergée pour suivre le workflow des PCs vendus / montés
 ## Pré-requis
 
 - Docker + Docker Compose
-- Un domaine (optionnel) pour HTTPS automatique via Caddy
 
 ## Installation rapide
 
@@ -13,24 +12,22 @@ Application web auto-hébergée pour suivre le workflow des PCs vendus / montés
 2. Lancer les services :
 
 ```bash
-docker compose up -d --build
+docker-compose up -d --build
 ```
 
-3. Créer le premier utilisateur admin :
-
-```bash
-docker compose exec backend python -m app.cli create-user --username admin --password "motdepasse" --role ADMIN
-```
-
-L'application est disponible sur `http://localhost` (ou votre domaine si configuré).
+Un compte admin est créé automatiquement au premier démarrage si aucun utilisateur n'existe encore.
+L'application est disponible sur `http://localhost:5173` et l'API sur `http://localhost:8000`.
+Sur Synology, remplacez `localhost` par l'IP du NAS.
 
 ## Configuration `.env`
 
 - `POSTGRES_PASSWORD` : mot de passe PostgreSQL.
 - `JWT_SECRET` : secret de signature des JWT.
-- `DOMAIN` : domaine utilisé par Caddy (ex: `pcs.example.com`). Mettre `localhost` pour LAN.
-- `CADDY_EMAIL` : email pour les certificats Let's Encrypt.
 - `CORS_ORIGINS` : liste d'origines autorisées (par défaut `*`).
+- `VITE_API_BASE` : URL de l'API utilisée par le frontend (par défaut `http://localhost:8000`).
+- `ADMIN_USERNAME` : identifiant admin initial (par défaut `admin`).
+- `ADMIN_PASSWORD` : mot de passe admin initial (par défaut `admin1234`).
+- `ADMIN_ROLE` : rôle admin initial (par défaut `ADMIN`).
 
 ## Sauvegardes
 
@@ -41,7 +38,7 @@ Les sauvegardes quotidiennes sont stockées dans `./data/backups`.
 ```bash
 # Arrêter les services
 
-docker compose down
+docker-compose down
 
 # Restaurer une sauvegarde (adapter le nom de fichier)
 
@@ -52,7 +49,7 @@ docker run --rm -v $(pwd)/data/backups:/backups -v $(pwd)/data/postgres:/var/lib
 Ensuite :
 
 ```bash
-docker compose up -d
+docker-compose up -d
 ```
 
 ## Commandes utiles
@@ -60,11 +57,11 @@ docker compose up -d
 ```bash
 # Logs
 
-docker compose logs -f
+docker-compose logs -f
 
 # Migrations manuelles
 
-docker compose exec backend alembic upgrade head
+docker-compose exec backend alembic upgrade head
 ```
 
 ## Tests backend
