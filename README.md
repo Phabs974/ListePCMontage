@@ -73,3 +73,8 @@ docker compose exec backend alembic upgrade head
 pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 PYTHONPATH=backend pytest
 ```
+
+## Import de factures PDF
+
+Le modèle actuellement supporté correspond au PDF d'exemple `tests/fixtures/facture_exemple.pdf`
+(facture DreamStation avec une ligne "PC GAMER").

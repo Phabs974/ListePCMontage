@@ -1,14 +1,14 @@
-import tempfile
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
+from app.invoice_parser import InvoiceParseError, parse_invoice_pdf
 from app.models.order import Order
 from app.models.user import UserRole
 from app.schemas.imports import ImportResult
 from app.schemas.order import OrderOut
-from app.services.pdf_parser import parse_invoice_pdf
 
 router = APIRouter(prefix="/import", tags=["import"])
 
@@ -25,24 +25,23 @@ def import_invoice(
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PDF required")
 
-    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
-        tmp.write(file.file.read())
-        tmp.flush()
-        data, errors = parse_invoice_pdf(tmp.name)
+    try:
+        data = parse_invoice_pdf(file.file.read())
+    except InvoiceParseError as exc:
+        return ImportResult(status="error", errors={"code": exc.code})
 
-    if errors:
-        return ImportResult(status="error", errors=errors)
-
-    existing = db.query(Order).filter(Order.invoice_number == data.invoice_number).first()
+    existing = (
+        db.query(Order).filter(Order.invoice_number == data["invoice_number"]).first()
+    )
     if existing:
         return ImportResult(status="already_exists", order=OrderOut.model_validate(existing))
 
     order = Order(
-        invoice_number=data.invoice_number,
-        store=data.store,
-        client_name=data.client_name,
-        product_name=data.product_name,
-        sold_at=data.sold_at,
+        invoice_number=data["invoice_number"],
+        store=data["store"],
+        client_name=data["client_name"],
+        product_name=data["product_name"],
+        sold_at=datetime.fromisoformat(data["sold_at"]),
         created_by=current_user.id,
     )
     db.add(order)
